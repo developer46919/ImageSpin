@@ -1,2 +1,2 @@
-call tsc
+call npx tsc
 call node dist/test.js

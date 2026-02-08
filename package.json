@@ -1,5 +1,20 @@
 {
+  "name": "image-spin",
+  "version": "1.0.0",
+  "description": "Image spin tool to make RGB values spin around different images",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
   "dependencies": {
     "jimp": "^0.22.10"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.10",
+    "typescript": "^5.9.3"
   }
 }

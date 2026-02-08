@@ -1,0 +1,5 @@
+test_data/
+test_results/
+run.bat
+test.ts
+src/test/

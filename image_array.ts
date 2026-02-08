@@ -14,22 +14,16 @@ export class ImageArray {
     static async getRGBArray(path: string): Promise<number[]> {
         // Read the image
         const image = await Jimp.read(path);
-        const width = image.bitmap.width;
-        const height = image.bitmap.height;
-        let rgbArray = [];
+        const data = image.bitmap.data; // Direct access to RGBA buffer
+        const pixelCount = image.bitmap.width * image.bitmap.height;
+        const rgbArray = new Array(pixelCount * 3);
 
-        // Loop over each pixel
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                // Get the color of the pixel
-                let hex = image.getPixelColor(x, y);
-                let rgb = Jimp.intToRGBA(hex);
-
-                // Push the RGB values to the array
-                rgbArray.push(rgb.r);
-                rgbArray.push(rgb.g);
-                rgbArray.push(rgb.b);
-            }
+        // Directly read from bitmap buffer (RGBA format, 4 bytes per pixel)
+        for (let i = 0, j = 0; i < pixelCount; i++) {
+            const offset = i * 4;
+            rgbArray[j++] = data[offset];     // R
+            rgbArray[j++] = data[offset + 1]; // G
+            rgbArray[j++] = data[offset + 2]; // B
         }
 
         return rgbArray;
@@ -42,18 +36,16 @@ export class ImageArray {
         const height = rgbArray.length / (width * 3);
         // Create a new image
         const image = new Jimp(width, height);
+        const data = image.bitmap.data;
 
-        // Loop over each pixel
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                // Get the RGB values from the array
-                let r = rgbArray[y * width * 3 + x * 3];
-                let g = rgbArray[y * width * 3 + x * 3 + 1];
-                let b = rgbArray[y * width * 3 + x * 3 + 2];
-
-                // Set the color of the pixel
-                image.setPixelColor(Jimp.rgbaToInt(r, g, b, 255), x, y);
-            }
+        // Directly write to bitmap buffer (RGBA format, 4 bytes per pixel)
+        const pixelCount = width * height;
+        for (let i = 0, j = 0; i < pixelCount; i++) {
+            const offset = i * 4;
+            data[offset] = rgbArray[j++];     // R
+            data[offset + 1] = rgbArray[j++]; // G
+            data[offset + 2] = rgbArray[j++]; // B
+            data[offset + 3] = 255;           // A
         }
 
         // Save the image to disk
@@ -67,21 +59,17 @@ export class ImageArray {
     static async getPixelArray(path:string): Promise<number[]> {
         // Read the image
         const image = await Jimp.read(path);
-        const width = image.bitmap.width;
-        const height = image.bitmap.height;
-        let pixelArray = [];
+        const data = image.bitmap.data; // Direct access to RGBA buffer
+        const pixelCount = image.bitmap.width * image.bitmap.height;
+        const pixelArray = new Array(pixelCount);
 
-        // Loop over each pixel
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                // Get the color of the pixel
-                let pixelColor = image.getPixelColor(x, y);
-                // Remove the alpha channel
-                let {r, g, b} = Jimp.intToRGBA(pixelColor);
-                pixelColor = (r << 16) + (g << 8) + b;
-                // Push the pixel to the array
-                pixelArray.push(pixelColor);
-            }
+        // Directly read from bitmap buffer (RGBA format, 4 bytes per pixel)
+        for (let i = 0; i < pixelCount; i++) {
+            const offset = i * 4;
+            const r = data[offset];
+            const g = data[offset + 1];
+            const b = data[offset + 2];
+            pixelArray[i] = (r << 16) + (g << 8) + b;
         }
 
         return pixelArray;
@@ -94,20 +82,16 @@ export class ImageArray {
         const height = pixelArray.length / width;
         // Create a new image
         const image = new Jimp(width, height);
+        const data = image.bitmap.data;
 
-        // Loop over each pixel
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                // Get the pixel from the array
-                let pixelColor = pixelArray[y * width + x];
-                // add the alpha channel
-                let r = (pixelColor >> 16) & 0xFF;
-                let g = (pixelColor >> 8) & 0xFF;
-                let b = pixelColor & 0xFF;
-                let pixel = Jimp.rgbaToInt(r, g, b, 255);
-                // Set the color of the pixel
-                image.setPixelColor(pixel, x, y);
-            }
+        // Directly write to bitmap buffer (RGBA format, 4 bytes per pixel)
+        for (let i = 0; i < pixelArray.length; i++) {
+            const pixelColor = pixelArray[i];
+            const offset = i * 4;
+            data[offset] = (pixelColor >> 16) & 0xFF;     // R
+            data[offset + 1] = (pixelColor >> 8) & 0xFF;  // G
+            data[offset + 2] = pixelColor & 0xFF;         // B
+            data[offset + 3] = 255;                       // A
         }
 
         // Save the image to disk
